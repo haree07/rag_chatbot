@@ -41,11 +41,11 @@ export async function processPdfFile(formData: FormData) {
       success: true,
       message: `Created ${records.length} searchable chunks`,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error("PDF processing error:", error);
     return {
       success: false,
-      error: "Failed to process PDF",
+      error: `Failed to process PDF: ${error?.message || error || "Unknown error"}`,
     };
   }
 }

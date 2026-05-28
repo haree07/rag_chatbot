@@ -23,7 +23,7 @@ import { Loader } from "@/components/ai-elements/loader";
 
 export default function RAGChatBot() {
   const [input, setInput] = useState("");
-  const { messages, sendMessage, status } = useChat();
+  const { messages, sendMessage, status, error } = useChat();
 
   const handleSubmit = (message: PromptInputMessage) => {
     if (!message.text) {
@@ -60,6 +60,12 @@ export default function RAGChatBot() {
                 })}
               </div>
             ))}
+            {error && (
+              <div className="mx-4 p-4 rounded-xl border border-destructive/20 bg-destructive/10 text-destructive text-sm flex flex-col gap-1 shadow-sm">
+                <span className="font-semibold">Chat Completion Error</span>
+                <span className="opacity-90">{error.message || "Failed to stream chat completion. Please check your console."}</span>
+              </div>
+            )}
             {(status === "submitted" || status === "streaming") && <Loader />}
           </ConversationContent>
           <ConversationScrollButton />

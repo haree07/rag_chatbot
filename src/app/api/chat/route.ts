@@ -1,4 +1,3 @@
-// src/app/api/chat/route.ts
 import {
   streamText,
   UIMessage,
@@ -8,7 +7,7 @@ import {
   UIDataTypes,
   stepCountIs,
 } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { google } from "@ai-sdk/google";
 import { z } from "zod";
 import { searchDocuments } from "@/lib/search";
 
@@ -47,21 +46,23 @@ export type ChatMessage = UIMessage<never, UIDataTypes, ChatTools>;
 export async function POST(req: Request) {
   try {
     const { messages }: { messages: ChatMessage[] } = await req.json();
+    const modelMessages = await convertToModelMessages(messages);
 
     const result = streamText({
-      model: openai("gpt-5-mini"),
-      messages: convertToModelMessages(messages),
+      model: google("gemini-2.5-flash") as any,
+      messages: modelMessages,
       tools,
       system: `You are a helpful assistant with access to a knowledge base. 
           When users ask questions, search the knowledge base for relevant information.
           Always search before answering if the question might relate to uploaded documents.
           Base your answers on the search results when available. Give concise answers that correctly answer what the user is asking for. Do not flood them with all the information from the search results.`,
-      stopWhen: stepCountIs(2),
+      // Allow model -> tool -> model cycles without cutting off the final answer.
+      stopWhen: stepCountIs(5),
     });
 
     return result.toUIMessageStreamResponse();
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error streaming chat completion:", error);
-    return new Response("Failed to stream chat completion", { status: 500 });
+    return new Response(`Failed to stream chat completion: ${error?.message || error || "Unknown error"}\nStack: ${error?.stack || ""}`, { status: 500 });
   }
 }
